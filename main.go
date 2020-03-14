@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
-	"github.com/billykwooten/darksky-exporter/geo-golang"
-	"github.com/billykwooten/darksky-exporter/prom"
-	"github.com/billykwooten/darksky-exporter/version"
+	"github.com/stefancrain/darksky-exporter/geo-golang"
+	"github.com/stefancrain/darksky-exporter/prom"
+	"github.com/stefancrain/darksky-exporter/version"
 	"github.com/codingsince1985/geo-golang/openstreetmap"
 	"github.com/prometheus/client_golang/prometheus"
 	"gopkg.in/alecthomas/kingpin.v2"
