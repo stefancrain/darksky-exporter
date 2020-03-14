@@ -19,6 +19,8 @@ RUN go get -d -v
 
 # Build Binary in builder
 RUN CGO_ENABLED=0 GOOS="linux" GOARCH="arm64" go build -a -installsuffix cgo -ldflags="-w -s" -o /app
+# RUN CGO_ENABLED=0 GOOS="linux" GOARCH="amd64" go build -a -installsuffix cgo -ldflags="-w -s" -o /app
+
 # Create Container
 FROM scratch
 
