@@ -171,7 +171,7 @@ func CollectSample(apikey string, latitude string, longitude string, city string
 	}
 
 	icon.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "icon": f.Currently.Icon }).Set(1)
-	if f.Currently.Icon != last_weather {
+	if f.Currently.Icon != last_icon {
 		icon.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "icon": last_icon }).Set(0)
 	}
 	last_icon = f.Currently.Icon
