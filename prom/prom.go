@@ -10,6 +10,27 @@ import (
 )
 
 var (
+	summary = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "darksky_summary",
+			Help: "summary",
+		},
+		[]string{"city","latitude", "longitude", "summary"},
+	)
+	icon = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "darksky_icon",
+			Help: "icon",
+		},
+		[]string{"city","latitude", "longitude", "icon"},
+	)
+	uvIndexGauge = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "darksky_uv_index",
+			Help: "UV Index",
+		},
+		[]string{"city","latitude", "longitude"},
+	)
 	temperatureGauge = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "darksky_temperature",
@@ -87,13 +108,6 @@ var (
 		},
 		[]string{"city","latitude", "longitude"},
 	)
-	summary = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "darksky_summary",
-			Help: "summary",
-		},
-		[]string{"city","latitude", "longitude", "summary"},
-	)
 	visibility = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "darksky_visibility",
@@ -116,9 +130,14 @@ var (
 		[]string{"city","latitude", "longitude"},
 	)
 	last_weather = ""
+	last_icon = ""
+
 )
 
 func init() {
+	prometheus.MustRegister(summary)
+	prometheus.MustRegister(icon)
+	prometheus.MustRegister(uvIndexGauge)
 	prometheus.MustRegister(temperatureGauge)
 	prometheus.MustRegister(precipIntensity)
 	prometheus.MustRegister(precipProbability)
@@ -130,7 +149,6 @@ func init() {
 	prometheus.MustRegister(windGust)
 	prometheus.MustRegister(windBearing)
 	prometheus.MustRegister(cloudCover)
-	prometheus.MustRegister(summary)
 	prometheus.MustRegister(visibility)
 	prometheus.MustRegister(ozone)
 	prometheus.MustRegister(nearestStormDistance)
@@ -138,6 +156,9 @@ func init() {
 
 func f2s(f float64) string {
 	return fmt.Sprintf("%f", f)
+}
+func i2f(in int64) float64 {
+	return float64(in)
 }
 
 func CollectSample(apikey string, latitude string, longitude string, city string) {
@@ -148,6 +169,20 @@ func CollectSample(apikey string, latitude string, longitude string, city string
 		log.Println("Skipping measurement due to error.")
 		return
 	}
+
+	icon.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "icon": f.Currently.Icon }).Set(1)
+	if f.Currently.Icon != last_weather {
+		icon.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "icon": last_icon }).Set(0)
+	}
+	last_icon = f.Currently.Icon
+
+	summary.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "summary": f.Currently.Summary }).Set(1)
+	if f.Currently.Summary != last_weather {
+		summary.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "summary": last_weather }).Set(0)
+	}
+	last_weather = f.Currently.Summary
+
+	uvIndexGauge.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(i2f(f.Currently.UVIndex))
 
 	temperatureGauge.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(f.Currently.Temperature)
 	precipIntensity.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(f.Currently.PrecipIntensity)
@@ -163,12 +198,6 @@ func CollectSample(apikey string, latitude string, longitude string, city string
 	ozone.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(f.Currently.Ozone)
 	nearestStormDistance.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(f.Currently.NearestStormDistance)
 	windGust.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city}).Set(f.Currently.WindGust)
-
-	summary.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "summary": f.Currently.Summary }).Set(1)
-	if f.Currently.Summary != last_weather {
-		summary.With(prometheus.Labels{"latitude": f2s(f.Latitude), "longitude": f2s(f.Longitude), "city": city, "summary": last_weather }).Set(0)
-	}
-	last_weather = f.Currently.Summary
 
 }
 
